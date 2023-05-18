@@ -21,8 +21,7 @@ fn new_app() App {
 }
 
 pub fn (mut app App) destroy_handler(sig os.Signal) {
-	println('shutting down gracefully!')
-	time.sleep(5 * time.second)
+	println('shutting down ...')
 	app.pool.disconnect() or { panic(err) }
 	println('done!')
 	exit(0)
@@ -32,6 +31,7 @@ fn main() {
 	println('Hello World!')
 	mut app := new_app()
 	os.signal_opt(os.Signal.term, app.destroy_handler)!
+	os.signal_opt(os.Signal.int, app.destroy_handler)!
 	for {
 		time.sleep(1 * time.second)
 		println('-------------------------------------------------------------------------')
