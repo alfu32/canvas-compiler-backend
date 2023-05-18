@@ -1,6 +1,7 @@
 module geometry
 
 import json
+import vweb
 
 pub struct Entity {
 pub mut:
@@ -9,13 +10,27 @@ pub mut:
 	json     string
 }
 
+pub struct MetadataRecord {
+pub mut:
+	id   string
+	json string
+	path []string
+}
+
 pub struct EntityMetadata {
+pub mut:
 	id           string
 	ent_type     string
 	technology   TechnoLang = new_technolang()
 	content_type string     = 'application/javascript'
-	text         string     = ''
-	tag          string     = 'code'
+	text         string
+	tag          string = 'code'
+}
+
+pub fn entity_metadata_from_json(j string) !EntityMetadata {
+	mut e := json.decode(EntityMetadata, j) or { panic(err) }
+	// e.json = j
+	return e
 }
 
 pub fn new_metadata(id string) EntityMetadata {

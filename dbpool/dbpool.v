@@ -216,6 +216,21 @@ pub fn (mut s DbPool) get_all_entities() []geometry.Entity {
 	})
 }
 
+pub fn (mut s DbPool) get_all_metadatas() []geometry.MetadataRecord {
+	q := "
+		select m.id,m.json,CONCAT('[',h.path,']') as path_json from METADATA m
+		inner join V_HIERARCHY h on h.id=m.id
+	".trim_indent()
+	r := s.mysql_query(q) or { panic(err) }
+	return r.rows.map(fn (r GenericRow) geometry.MetadataRecord {
+		return geometry.MetadataRecord{
+			id: r.vals[0]
+			json: r.vals[1]
+			path: json.decode([]string, r.vals[2]) or { []string{} }
+		}
+	})
+}
+
 pub fn (mut s DbPool) get_entities_inside_box(box geometry.Box) []geometry.Entity {
 	x0 := box.anchor.x
 	x1 := box.corner().x
