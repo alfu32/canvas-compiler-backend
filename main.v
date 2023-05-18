@@ -44,6 +44,12 @@ fn main() {
 		time.sleep(1 * time.second)
 		println('-------------------------------------------------------------------------')
 		mut all_techs := app.pool.get_technologies()
+
+		// TODO refactor to
+		// select bx.id,bx.json as drawable_json,m.json as metadata_json,CONCAT('[',h.path,']') as path_json from
+		// 		from BOXES bx,
+		// 		left outer METADATA m on m.id=bx.id
+		//    	inner join V_HIERARCHY h on h.id=m.id
 		mut all_entities := app.pool.get_all_entities()
 		mut all_entites_metadata := app.pool.get_all_metadatas()
 		mut entities_with_metadata := all_entities.map(fn [all_entites_metadata] (ent geometry.Entity) EntMetadata {
