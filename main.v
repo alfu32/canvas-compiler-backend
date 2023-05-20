@@ -28,13 +28,6 @@ pub fn (mut app App) destroy_handler(sig os.Signal) {
 	exit(0)
 }
 
-struct EntMetadata {
-pub mut:
-	ent  geometry.Drawable
-	meta geometry.EntityMetadata
-	mr   geometry.MetadataRecord
-}
-
 fn main() {
 	println('Hello World!')
 	mut app := new_app()
@@ -50,41 +43,22 @@ fn main() {
 		// 		from BOXES bx,
 		// 		left outer METADATA m on m.id=bx.id
 		//    	inner join V_HIERARCHY h on h.id=m.id
-		mut all_entities := app.pool.get_all_entities()
-		mut all_entites_metadata := app.pool.get_all_metadatas()
-		mut entities_with_metadata := all_entities.map(fn [all_entites_metadata] (ent geometry.Entity) EntMetadata {
-			md := all_entites_metadata.filter(fn [ent] (em geometry.MetadataRecord) bool {
-				return em.id == ent.id
-			})
-			if md.len > 0 {
-				em := md[0]
-				return EntMetadata{
-					ent: json.decode(geometry.Drawable, ent.json) or {
-						// panic("could not decode drawable ${ent.json}")
-						geometry.Drawable{}
-					}
-					meta: json.decode(geometry.EntityMetadata, em.json) or {
-						// panic("could not decode metadata ${em.json}")
-						geometry.EntityMetadata{}
-					}
-					mr: em
-				}
-			} else {
-				return EntMetadata{
-					ent: json.decode(geometry.Drawable, ent.json) or {
-						// panic("could not decode ${ent.json}")
-						geometry.Drawable{}
-					}
-					meta: geometry.EntityMetadata{}
-					mr: geometry.MetadataRecord{}
-				}
-			}
-		})
-		for em in entities_with_metadata {
-			println('${em.ent.ent_type} ${em.ent.name} ${em.meta.technology}')
-			match em.ent.ent_type {
+		// mut all_entities := app.pool.get_all_entities()
+		mut records := app.pool.get_all_metadatas() or { panic(err) }
+		mut record_index := map[string]geometry.MetadataRecord{}
+		for em in records {
+			println('${em.drawable.ent_type} ${em.drawable.name} ${em.metadata.technology}')
+			println(em)
+			record_index[em.id] = em
+		}
+		for em in records {
+			match em.drawable.ent_type {
 				'Drawable' {
-					println(em)
+					mut local_hierarchy := em.hierarchy.map(fn [record_index] (id string) geometry.MetadataRecord {
+						return record_index[id]
+					})
+					local_hierarchy.reverse_in_place()
+					println(local_hierarchy.map(it.drawable.name).join('/'))
 				}
 				else {}
 			}
