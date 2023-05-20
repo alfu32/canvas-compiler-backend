@@ -1,7 +1,6 @@
 module geometry
 
 import json
-import vweb
 
 pub struct Entity {
 pub mut:
