@@ -3,13 +3,16 @@ module main
 import dbpool
 import os
 import time
-import json
 import geometry
+import compilers
 
 [heap]
 struct App {
 mut:
 	pool dbpool.DbPool
+	///// compilers map[string]compilers.Compiler = {
+	///// 	"jsc" : compilers.JsNodeCompiler{}
+	///// }
 }
 
 fn new_app() App {
@@ -33,7 +36,8 @@ fn main() {
 	mut app := new_app()
 	os.signal_opt(os.Signal.term, app.destroy_handler)!
 	os.signal_opt(os.Signal.int, app.destroy_handler)!
-	for {
+	mut running:=true
+	for running{
 		time.sleep(1 * time.second)
 		println('-------------------------------------------------------------------------')
 		mut all_techs := app.pool.get_technologies()
@@ -46,11 +50,15 @@ fn main() {
 		// mut all_entities := app.pool.get_all_entities()
 		mut records := app.pool.get_all_metadatas() or { panic(err) }
 		mut record_index := map[string]geometry.MetadataRecord{}
+		mut jsc := compilers.JsNodeCompiler{}
+		println(jsc)
 		for em in records {
 			println('${em.drawable.ent_type} ${em.drawable.name} ${em.metadata.technology}')
 			println(em)
 			record_index[em.id] = em
 		}
+		os.rmdir_all("compiled")or{}
+		os.mkdir("compiled")or{}
 		for em in records {
 			match em.drawable.ent_type {
 				'Drawable' {
@@ -58,10 +66,22 @@ fn main() {
 						return record_index[id]
 					})
 					local_hierarchy.reverse_in_place()
-					println(local_hierarchy.map(it.drawable.name).join('/'))
+					/// println(local_hierarchy.map(it.drawable.name).join('/'))
+					fq_name:=jsc.get_fq_name(local_hierarchy)
+					file_name:=jsc.get_file_name(local_hierarchy)
+					compiled_content:=jsc.get_compiled_content(em,record_index)
+
+					os.write_file("compiled/${file_name}",compiled_content)or{
+						println(err)
+					}
+
+					println(fq_name)
+					println(file_name)
+					println(compiled_content)
 				}
 				else {}
 			}
 		}
+		running=false
 	}
 }

@@ -216,6 +216,15 @@ pub fn (mut s DbPool) get_all_entities() []geometry.Entity {
 	})
 }
 
+pub fn default_metadata_json(id string) string {
+	return '{
+		"id":"${id}",
+		"ent_type":"Drawable",
+		"text":"",
+		"technology":{"technoid":"none","langid":"markdown"},
+		"content_type":"application/javascript"
+	}'.trim_indent()
+}
 pub fn (mut s DbPool) get_all_metadatas() ![]geometry.MetadataRecord {
 	// TODO refactor to
 	// select bx.id,bx.json as drawable_json,m.json as metadata_json,CONCAT('[',h.path,']') as path_json from
@@ -227,15 +236,19 @@ pub fn (mut s DbPool) get_all_metadatas() ![]geometry.MetadataRecord {
 		    bx.id,
 		    bx.json as drawable_json,
 		    m.json as metadata_json,
-		    CONCAT('[',h.path,']') as path_json
+		    CONCAT('[',NVL(h.path,''),']') as path_json
 		from BOXES bx
 		left outer join METADATA m on m.id=bx.id
-   		inner join V_HIERARCHY h on h.id=m.id
+   		left outer join V_HIERARCHY h on h.id=m.id
 	".trim_indent()
 	r := s.mysql_query(q) or { return err }
 	return r.rows.map(fn (r GenericRow) geometry.MetadataRecord {
 		drawable := json.decode(geometry.Drawable, r.vals[1]) or { panic(err) }
-		metadata := json.decode(geometry.EntityMetadata, r.vals[2]) or { panic(err) }
+		mut metadata := if r.vals[2]!='' {
+			json.decode(geometry.EntityMetadata, r.vals[2]) or { panic(err) }
+		} else {
+			json.decode(geometry.EntityMetadata, default_metadata_json(r.vals[0])) or { panic(err) }
+		}
 		hierarchy := json.decode([]string, r.vals[3]) or { panic(err) }
 		return geometry.MetadataRecord{
 			id: r.vals[0]
