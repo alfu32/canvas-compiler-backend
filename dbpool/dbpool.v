@@ -225,6 +225,7 @@ pub fn default_metadata_json(id string) string {
 		"content_type":"application/javascript"
 	}'.trim_indent()
 }
+
 pub fn (mut s DbPool) get_all_metadatas() ![]geometry.MetadataRecord {
 	// TODO refactor to
 	// select bx.id,bx.json as drawable_json,m.json as metadata_json,CONCAT('[',h.path,']') as path_json from
@@ -244,7 +245,7 @@ pub fn (mut s DbPool) get_all_metadatas() ![]geometry.MetadataRecord {
 	r := s.mysql_query(q) or { return err }
 	return r.rows.map(fn (r GenericRow) geometry.MetadataRecord {
 		drawable := json.decode(geometry.Drawable, r.vals[1]) or { panic(err) }
-		mut metadata := if r.vals[2]!='' {
+		mut metadata := if r.vals[2] != '' {
 			json.decode(geometry.EntityMetadata, r.vals[2]) or { panic(err) }
 		} else {
 			json.decode(geometry.EntityMetadata, default_metadata_json(r.vals[0])) or { panic(err) }
@@ -254,6 +255,7 @@ pub fn (mut s DbPool) get_all_metadatas() ![]geometry.MetadataRecord {
 			id: r.vals[0]
 			drawable: drawable
 			metadata: metadata
+			compiler_id: metadata.technology.compiler_id()
 			hierarchy: hierarchy
 		}
 	})
