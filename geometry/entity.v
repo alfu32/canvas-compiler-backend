@@ -11,10 +11,11 @@ pub mut:
 
 pub struct MetadataRecord {
 pub mut:
-	id        string
-	drawable  Drawable
-	metadata  EntityMetadata
-	hierarchy []string
+	id          string
+	drawable    Drawable
+	metadata    EntityMetadata
+	compiler_id string
+	hierarchy   []string
 }
 
 pub struct EntityMetadata {

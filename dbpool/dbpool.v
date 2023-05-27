@@ -241,6 +241,7 @@ pub fn (mut s DbPool) get_all_metadatas() ![]geometry.MetadataRecord {
 			id: r.vals[0]
 			drawable: drawable
 			metadata: metadata
+			compiler_id: metadata.technology.compiler_id()
 			hierarchy: hierarchy
 		}
 	})

@@ -3,8 +3,8 @@ module main
 import dbpool
 import os
 import time
-import json
 import geometry
+import compilers
 
 [heap]
 struct App {
@@ -51,6 +51,7 @@ fn main() {
 			println(em)
 			record_index[em.id] = em
 		}
+		mut js_compiler := compilers.JsNodeCompiler{}
 		for em in records {
 			match em.drawable.ent_type {
 				'Drawable' {
@@ -59,6 +60,8 @@ fn main() {
 					})
 					local_hierarchy.reverse_in_place()
 					println(local_hierarchy.map(it.drawable.name).join('/'))
+					println(js_compiler.get_file_name(local_hierarchy))
+					println(js_compiler.get_compiled_content(local_hierarchy, record_index))
 				}
 				else {}
 			}
