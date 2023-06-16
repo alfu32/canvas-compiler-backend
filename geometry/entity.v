@@ -17,6 +17,21 @@ pub mut:
 	compiler_id string
 	hierarchy   []string
 }
+pub fn (em MetadataRecord) get_local_hierarchy( index map[string]MetadataRecord) []MetadataRecord {
+	mut local_hierarchy := em.hierarchy.map(fn [index] (id string) MetadataRecord {
+		return index[id]
+	})
+	local_hierarchy.reverse_in_place()
+	return local_hierarchy
+}
+
+pub fn  (em MetadataRecord) get_partial_file_name(index map[string]MetadataRecord) string {
+	return em.get_local_hierarchy((index)).map(fn(mr MetadataRecord) string {return mr.drawable.name}).join('/')
+}
+
+pub fn (em MetadataRecord) get_partial_fq_name(index map[string]MetadataRecord) string {
+	return em.get_local_hierarchy((index)).map(fn(mr MetadataRecord) string {return mr.drawable.name}).join('.')
+}
 
 pub struct EntityMetadata {
 pub mut:

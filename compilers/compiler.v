@@ -11,12 +11,9 @@ pub struct Port {
 	definition string
 }
 
-pub interface Compiler {
+pub struct Compiler {
 mut:
 	id string
-	get_file_name(path []geometry.MetadataRecord) string
-	get_fq_name(path []geometry.MetadataRecord) string
-	get_compiled_content(em geometry.MetadataRecord, index map[string]geometry.MetadataRecord) string
 }
 
 pub fn get_local_hierarchy(em geometry.MetadataRecord, index map[string]geometry.MetadataRecord) []geometry.MetadataRecord {
