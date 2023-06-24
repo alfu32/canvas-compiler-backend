@@ -1,4 +1,4 @@
-module geometry
+module entities
 
 pub struct TechnoLang {
 	technoid string = 'none'

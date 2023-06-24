@@ -1,6 +1,7 @@
-module geometry
+module entities
 
 import json
+import alfu32.geometry
 
 pub struct Entity {
 pub mut:
@@ -30,7 +31,7 @@ pub fn  (em MetadataRecord) get_partial_file_name(index map[string]MetadataRecor
 }
 
 pub fn (em MetadataRecord) get_partial_fq_name(index map[string]MetadataRecord) string {
-	return em.get_local_hierarchy((index)).map(fn(mr MetadataRecord) string {return mr.drawable.name}).join('.')
+	return em.get_local_hierarchy((index)).map(fn(mr MetadataRecord) string {return mr.drawable.name}).join('../geometry')
 }
 
 pub struct EntityMetadata {
@@ -71,6 +72,6 @@ pub fn entity_from_json_array(json_string string) ![]Entity {
 	return entities
 }
 
-pub fn (e Entity) get_box() !Box {
-	return json.decode(Box, e.json)
+pub fn (e Entity) get_box() !geometry.Box {
+	return json.decode(geometry.Box, e.json)
 }
