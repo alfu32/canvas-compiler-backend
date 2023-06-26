@@ -1,6 +1,8 @@
 module utils
 
+
+
 pub struct Ref {
-pub mut:
+	pub mut:
 	ref string
 }
