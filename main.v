@@ -3,44 +3,46 @@ module main
 import dbpool
 import os
 import time
-import geometry
 import compilers
+import entities
 
 [heap]
-struct App {
-mut:
+struct ServiceLayer {
+pub mut:
 	pool dbpool.DbPool
 	///// compilers map[string]compilers.Compiler = {
 	///// 	"jsc" : compilers.JsNodeCompiler{}
 	///// }
 }
 
-fn new_app() App {
-	mut pool := dbpool.DbPool{}
+fn new_service_layer() ServiceLayer {
+	mut pool := dbpool.init('admin','geodb','password') or {
+		panic(err)
+	}
 	pool.init_mysql() or { panic(err) }
-	mut app := App{
+	mut service_layer := ServiceLayer{
 		pool: pool
 	}
-	return app
+	return service_layer
 }
 
-pub fn (mut app App) destroy_handler(sig os.Signal) {
+pub fn (mut sl ServiceLayer) destroy_handler(sig os.Signal) {
 	println('shutting down ...')
-	app.pool.disconnect() or { panic(err) }
+	sl.pool.disconnect() or { panic(err) }
 	println('done!')
 	exit(0)
 }
 
 fn main() {
 	println('Hello World!')
-	mut app := new_app()
-	os.signal_opt(os.Signal.term, app.destroy_handler)!
-	os.signal_opt(os.Signal.int, app.destroy_handler)!
+	mut sl := new_service_layer()
+	os.signal_opt(os.Signal.term, sl.destroy_handler)!
+	os.signal_opt(os.Signal.int, sl.destroy_handler)!
 	mut running:=true
 	for running{
 		time.sleep(1 * time.second)
 		println('-------------------------------------------------------------------------')
-		mut all_techs := app.pool.get_technologies()
+		// mut all_techs := sl.pool.get_technologies()
 
 		// TODO refactor to
 		// select bx.id,bx.json as drawable_json,m.json as metadata_json,CONCAT('[',h.path,']') as path_json from
@@ -48,8 +50,8 @@ fn main() {
 		// 		left outer METADATA m on m.id=bx.id
 		//    	inner join V_HIERARCHY h on h.id=m.id
 		// mut all_entities := app.pool.get_all_entities()
-		mut records := app.pool.get_all_metadatas() or { panic(err) }
-		mut record_index := map[string]geometry.MetadataRecord{}
+		mut records := sl.pool.get_all_metadatas() or { panic(err) }
+		mut record_index := map[string]entities.MetadataRecord{}
 		mut jsc := compilers.JsNodeCompiler{}
 		println(jsc)
 		for em in records {
@@ -62,7 +64,7 @@ fn main() {
 		for em in records {
 			match em.drawable.ent_type {
 				'Drawable' {
-					mut local_hierarchy := em.hierarchy.map(fn [record_index] (id string) geometry.MetadataRecord {
+					mut local_hierarchy := em.hierarchy.map(fn [record_index] (id string) entities.MetadataRecord {
 						return record_index[id]
 					})
 					local_hierarchy.reverse_in_place()
@@ -83,5 +85,9 @@ fn main() {
 			}
 		}
 		running=false
+		sl.pool.db.close()
+
+		println("finished")
+
 	}
 }

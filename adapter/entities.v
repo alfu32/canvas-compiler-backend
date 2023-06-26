@@ -1,6 +1,6 @@
 module adapter
 
-import geometry
+import alfu32.geometry
 
 pub struct CompiledFile{
 	path string
@@ -15,5 +15,5 @@ pub struct PrecompiledEntity{
 	id_path string[]
 	content string
 	kind string
-	tech geometry.TechnoLang
+	tech TechnoLang
 }

@@ -1,9 +1,10 @@
 module dbpool
 
-import geometry
+import alfu32.geometry
 import json
 import math
 import db.mysql
+import entities
 
 pub struct SqliteResultCode {
 	code  i64
@@ -21,8 +22,26 @@ pub mut:
 	username string = 'admin'
 	dbname   string = 'geodb'
 	password string = 'password'
+	db &mysql.DB
 }
 
+pub fn init(
+	username string,
+	dbname   string,
+	password string,
+) !DbPool {
+	db := mysql.connect(mysql.Config{
+		username: username
+		password: password
+		dbname: dbname
+	}) or { panic('could not connect to localhost:3306/$dbname using $username ') }
+	return DbPool{
+		username: username
+		password: password
+		dbname: dbname
+		db: &db
+	}
+}
 pub fn (mut s DbPool) init_mysql() ! {
 	s.mysql_exec('
 		CREATE TABLE IF NOT EXISTS BOXES(
@@ -159,8 +178,8 @@ pub fn (mut s DbPool) init_mysql() ! {
 		panic(err)
 	}
 }
-
 pub fn (mut s DbPool) disconnect() ! {
+	s.db.close()
 	println('closed database ${s}')
 }
 
@@ -169,31 +188,17 @@ struct GenericRow {
 }
 
 fn (mut s DbPool) mysql_exec(q string) ! {
-	mut con := mysql.Connection{
-		username: s.username
-		dbname: s.dbname
-		password: s.password
-	}
-	con.connect() or { panic('could not connect to ${s} ') }
-	con.query(q) or { panic(err) }
-	con.close()
+	s.db.query(q) or { panic(err) }
 }
 
 fn (mut s DbPool) mysql_query(q string) !SelectResult[GenericRow] {
-	mut con := mysql.Connection{
-		username: s.username
-		dbname: s.dbname
-		password: s.password
-	}
-	con.connect() or { panic('could not connect to ${s} ') }
-	rv := con.query(q) or { panic(err) }
+	rv := s.db.query(q) or { panic(err) }
 	mut rows := []GenericRow{}
 	for r in rv.rows() {
 		rows << GenericRow{
 			vals: r.vals.map(it.str())
 		}
 	}
-	con.close()
 	return SelectResult[GenericRow]{rows, SqliteResultCode{
 		code: 101
 		short: 'dummy mysql result'
@@ -201,14 +206,14 @@ fn (mut s DbPool) mysql_query(q string) !SelectResult[GenericRow] {
 	}}
 }
 
-pub fn (mut s DbPool) get_all_entities() []geometry.Entity {
+pub fn (mut s DbPool) get_all_entities() []entities.Entity {
 	q := '
 		SELECT id,ent_type,json,x0,y0,x1,y1,visible_size
 		FROM BOXES
 	'.trim_indent()
 	r := s.mysql_query(q) or { panic(err) }
-	return r.rows.map(fn (r GenericRow) geometry.Entity {
-		return geometry.Entity{
+	return r.rows.map(fn (r GenericRow) entities.Entity {
+		return entities.Entity{
 			id: r.vals[0]
 			ent_type: r.vals[1]
 			json: r.vals[2]
@@ -226,7 +231,7 @@ pub fn default_metadata_json(id string) string {
 	}'.trim_indent()
 }
 
-pub fn (mut s DbPool) get_all_metadatas() ![]geometry.MetadataRecord {
+pub fn (mut s DbPool) get_all_metadatas() ![]entities.MetadataRecord {
 	// TODO refactor to
 	// select bx.id,bx.json as drawable_json,m.json as metadata_json,CONCAT('[',h.path,']') as path_json from
 	// 		from BOXES bx,
@@ -243,15 +248,15 @@ pub fn (mut s DbPool) get_all_metadatas() ![]geometry.MetadataRecord {
    		left outer join V_HIERARCHY h on h.id=m.id
 	".trim_indent()
 	r := s.mysql_query(q) or { return err }
-	return r.rows.map(fn (r GenericRow) geometry.MetadataRecord {
-		drawable := json.decode(geometry.Drawable, r.vals[1]) or { panic(err) }
+	return r.rows.map(fn (r GenericRow) entities.MetadataRecord {
+		drawable := json.decode(entities.Drawable, r.vals[1]) or { panic(err) }
 		mut metadata := if r.vals[2] != '' {
-			json.decode(geometry.EntityMetadata, r.vals[2]) or { panic(err) }
+			json.decode(entities.EntityMetadata, r.vals[2]) or { panic(err) }
 		} else {
-			json.decode(geometry.EntityMetadata, default_metadata_json(r.vals[0])) or { panic(err) }
+			json.decode(entities.EntityMetadata, default_metadata_json(r.vals[0])) or { panic(err) }
 		}
 		hierarchy := json.decode([]string, r.vals[3]) or { panic(err) }
-		return geometry.MetadataRecord{
+		return entities.MetadataRecord{
 			id: r.vals[0]
 			drawable: drawable
 			metadata: metadata
@@ -261,7 +266,7 @@ pub fn (mut s DbPool) get_all_metadatas() ![]geometry.MetadataRecord {
 	})
 }
 
-pub fn (mut s DbPool) get_entities_inside_box(box geometry.Box) []geometry.Entity {
+pub fn (mut s DbPool) get_entities_inside_box(box geometry.Box) []entities.Entity {
 	x0 := box.anchor.x
 	x1 := box.corner().x
 	y0 := box.anchor.y
@@ -307,8 +312,8 @@ pub fn (mut s DbPool) get_entities_inside_box(box geometry.Box) []geometry.Entit
 	".trim_indent()
 	println(q)
 	r := s.mysql_query(q) or { panic(err) }
-	return r.rows.map(fn (r GenericRow) geometry.Entity {
-		return geometry.Entity{
+	return r.rows.map(fn (r GenericRow) entities.Entity {
+		return entities.Entity{
 			id: r.vals[0]
 			ent_type: r.vals[1]
 			json: r.vals[2]
@@ -316,7 +321,7 @@ pub fn (mut s DbPool) get_entities_inside_box(box geometry.Box) []geometry.Entit
 	})
 }
 
-pub fn (mut s DbPool) store_entities(es []geometry.Entity) ! {
+pub fn (mut s DbPool) store_entities(es []entities.Entity) ! {
 	for ent in es {
 		bx := json.decode(geometry.Box, ent.json) or {
 			eprintln('could not decode ${ent.json}')
@@ -347,10 +352,10 @@ pub fn (mut s DbPool) store_entities(es []geometry.Entity) ! {
 	}
 }
 
-pub fn (mut s DbPool) get_metadatas_by_ids(id_list []string) []geometry.Entity {
+pub fn (mut s DbPool) get_metadatas_by_ids(id_list []string) []entities.Entity {
 	placeholder_id := '########-####-####-####-############'
 	placeholder_ent_type := '$$$$$$$$-$$$$-$$$$-$$$$-$$$$$$$$$$$$'
-	default_metadata := json.encode(geometry.EntityMetadata{
+	default_metadata := json.encode(entities.EntityMetadata{
 		id: placeholder_id
 		ent_type: placeholder_ent_type
 	})
@@ -377,8 +382,8 @@ pub fn (mut s DbPool) get_metadatas_by_ids(id_list []string) []geometry.Entity {
 	".trim_indent()
 	println(q)
 	r := s.mysql_query(q) or { panic(err) }
-	return r.rows.map(fn (r GenericRow) geometry.Entity {
-		return geometry.Entity{
+	return r.rows.map(fn (r GenericRow) entities.Entity {
+		return entities.Entity{
 			id: r.vals[0]
 			ent_type: r.vals[1]
 			json: r.vals[2]
@@ -399,7 +404,7 @@ pub fn (mut s DbPool) get_languages() []string {
 	})
 }
 
-pub fn (mut s DbPool) get_technologies_for_language(lang string) []geometry.TechnoLang {
+pub fn (mut s DbPool) get_technologies_for_language(lang string) []entities.TechnoLang {
 	q := "
 		SELECT
 		    technoid,langid
@@ -408,15 +413,15 @@ pub fn (mut s DbPool) get_technologies_for_language(lang string) []geometry.Tech
 	".trim_indent()
 	println(q)
 	r := s.mysql_query(q) or { panic(err) }
-	return r.rows.map(fn (r GenericRow) geometry.TechnoLang {
-		return geometry.TechnoLang{
+	return r.rows.map(fn (r GenericRow) entities.TechnoLang {
+		return entities.TechnoLang{
 			technoid: r.vals[0]
 			langid: r.vals[1]
 		}
 	})
 }
 
-pub fn (mut s DbPool) get_technologies() []geometry.TechnoLang {
+pub fn (mut s DbPool) get_technologies() []entities.TechnoLang {
 	q := '
 		SELECT
 		    technoid,langid
@@ -424,8 +429,8 @@ pub fn (mut s DbPool) get_technologies() []geometry.TechnoLang {
 	'.trim_indent()
 	println(q)
 	r := s.mysql_query(q) or { panic(err) }
-	return r.rows.map(fn (r GenericRow) geometry.TechnoLang {
-		return geometry.TechnoLang{
+	return r.rows.map(fn (r GenericRow) entities.TechnoLang {
+		return entities.TechnoLang{
 			technoid: r.vals[0]
 			langid: r.vals[1]
 		}

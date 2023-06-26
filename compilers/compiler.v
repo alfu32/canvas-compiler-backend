@@ -1,7 +1,7 @@
 module compilers
 
-import geometry
-import arrays
+import entities
+import utils
 
 pub struct Port {
 	id         string
@@ -16,31 +16,31 @@ mut:
 	id string
 }
 
-pub fn get_local_hierarchy(em geometry.MetadataRecord, index map[string]geometry.MetadataRecord) []geometry.MetadataRecord {
-	mut local_hierarchy := em.hierarchy.map(fn [index] (id string) geometry.MetadataRecord {
+pub fn get_local_hierarchy(em entities.MetadataRecord, index map[string]entities.MetadataRecord) []entities.MetadataRecord {
+	mut local_hierarchy := em.hierarchy.map(fn [index] (id string) entities.MetadataRecord {
 		return index[id]
 	})
 	local_hierarchy.reverse_in_place()
 	return local_hierarchy
 }
 
-pub fn get_partial_file_name(path []geometry.MetadataRecord) string {
-	return path.map(fn(mr geometry.MetadataRecord) string {return mr.drawable.name}).join('/')
+pub fn get_partial_file_name(path []entities.MetadataRecord) string {
+	return path.map(fn(mr entities.MetadataRecord) string {return mr.drawable.name}).join('/')
 }
 
-pub fn get_partial_fq_name(path []geometry.MetadataRecord) string {
-	return path.map(fn(mr geometry.MetadataRecord) string {return mr.drawable.name}).join('.')
+pub fn get_partial_fq_name(path []entities.MetadataRecord) string {
+	return path.map(fn(mr entities.MetadataRecord) string {return mr.drawable.name}).join('.')
 }
 
-pub fn get_ports(link_em geometry.MetadataRecord, index map[string]geometry.MetadataRecord) []Port {
+pub fn get_ports(link_em entities.MetadataRecord, index map[string]entities.MetadataRecord) []Port {
 	mut links := []map[string]string{}
-	links << link_em.drawable.incoming_links.map(fn(r geometry.Ref) map[string]string {
+	links << link_em.drawable.incoming_links.map(fn(r utils.Ref) map[string]string {
 		mut mm := map[string]string{}
 			mm["ref"]=r.ref
 			mm["dir"]="in"
 		return mm
 	})
-	links << link_em.drawable.outgoing_links.map(fn(r geometry.Ref) map[string]string {
+	links << link_em.drawable.outgoing_links.map(fn(r utils.Ref) map[string]string {
 		mut mm := map[string]string{}
 		mm["ref"]=r.ref
 		mm["dir"]="out"

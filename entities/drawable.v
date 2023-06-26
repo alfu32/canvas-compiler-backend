@@ -1,30 +1,9 @@
 module entities
 
 import alfu32.geometry
-
-pub struct Ref {
-pub mut:
-	ref string
-}
-
-pub interface IDrawable {
-	ent_type string
-	name string
-	id string
-	anchor geometry.Point
-	size geometry.Point
-	rotation f64
-	parent ?Ref
-	is_open bool
-	children []Ref
-	outgoing_links []Ref
-	incoming_links []Ref
-	outgoing_traversing_links []Ref
-	incoming_traversing_links []Ref
-}
+import utils
 
 pub struct Drawable {
-	IDrawable
 pub mut:
 	ent_type                  string = 'Drawable'
 	name                      string = 'TRANSFORM'
@@ -32,31 +11,41 @@ pub mut:
 	anchor                    geometry.Point
 	size                      geometry.Point
 	rotation                  f64
-	parent                    ?Ref
+	parent                    ?utils.Ref
 	is_open                   bool  = true
-	children                  []Ref = []
-	outgoing_links            []Ref          [json: outgoingLinks] = []
-	incoming_links            []Ref          [json: incomingLinks] = []
-	outgoing_traversing_links []Ref          [json: outgoingTraversingLinks] = []
-	incoming_traversing_links []Ref          [json: incomingTraversingLinks] = []
+	children                  []utils.Ref = []
+	outgoing_links            []utils.Ref          [json: outgoingLinks] = []
+	incoming_links            []utils.Ref          [json: incomingLinks] = []
+	outgoing_traversing_links []utils.Ref          [json: outgoingTraversingLinks] = []
+	incoming_traversing_links []utils.Ref          [json: incomingTraversingLinks] = []
 }
 
-pub struct Link {
-	IDrawable
-pub mut:
-	ent_type                  string = 'Link'
-	name                      string = 'LINK'
-	id                        string
-	anchor                    geometry.Point
-	size                      geometry.Point
-	rotation                  f64
-	parent                    ?Ref
-	is_open                   bool = true
-	source                    ?Ref
-	destination               ?Ref
-	children                  []Ref = []
-	outgoing_links            []Ref          [json: outgoingLinks] = []
-	incoming_links            []Ref          [json: incomingLinks] = []
-	outgoing_traversing_links []Ref          [json: outgoingTraversingLinks] = []
-	incoming_traversing_links []Ref          [json: incomingTraversingLinks] = []
+pub fn (this Drawable) kind() EntityStereotype {
+	if this.children.len > 0 {
+		if utils.starts_or_ends_with(this.name,'error') {
+			return .composite_error_handler
+		} else if utils.starts_or_ends_with(this.name,'test') {
+			return .test_suite
+		} else {
+			return .composite_worker
+		}
+	} else if utils.starts_or_ends_with_any_of(this.name,'service', 'client', 'service', 'library',
+		'lib')
+	{
+		return .service_library
+	} else if utils.starts_or_ends_with(this.name,'error') {
+		return .error_handler
+	} else if utils.starts_or_ends_with(this.name,'test') {
+		return .test
+	} else {
+		if this.incoming_links.len > 0 && this.outgoing_links.len > 0 {
+			return .transformer
+		} else if this.incoming_links.len == 0 && this.outgoing_links.len > 0 {
+			return .generator
+		} else if this.incoming_links.len > 0 && this.outgoing_links.len == 0 {
+			return .sink
+		} else {
+			return .script
+		}
+	}
 }
