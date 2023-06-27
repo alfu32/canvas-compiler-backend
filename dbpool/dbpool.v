@@ -5,6 +5,7 @@ import json
 import math
 import db.mysql
 import entities
+import adapter
 
 pub struct SqliteResultCode {
 	code  i64
@@ -231,7 +232,7 @@ pub fn default_metadata_json(id string) string {
 	}'.trim_indent()
 }
 
-pub fn (mut s DbPool) get_all_metadatas() ![]entities.MetadataRecord {
+pub fn (mut s DbPool) get_all_metadatas() ![]adapter.MetadataRecord {
 	// TODO refactor to
 	// select bx.id,bx.json as drawable_json,m.json as metadata_json,CONCAT('[',h.path,']') as path_json from
 	// 		from BOXES bx,
@@ -248,7 +249,7 @@ pub fn (mut s DbPool) get_all_metadatas() ![]entities.MetadataRecord {
    		left outer join V_HIERARCHY h on h.id=m.id
 	".trim_indent()
 	r := s.mysql_query(q) or { return err }
-	return r.rows.map(fn (r GenericRow) entities.MetadataRecord {
+	return r.rows.map(fn (r GenericRow) adapter.MetadataRecord {
 		drawable := json.decode(entities.Drawable, r.vals[1]) or { panic(err) }
 		mut metadata := if r.vals[2] != '' {
 			json.decode(entities.EntityMetadata, r.vals[2]) or { panic(err) }
@@ -256,7 +257,7 @@ pub fn (mut s DbPool) get_all_metadatas() ![]entities.MetadataRecord {
 			json.decode(entities.EntityMetadata, default_metadata_json(r.vals[0])) or { panic(err) }
 		}
 		hierarchy := json.decode([]string, r.vals[3]) or { panic(err) }
-		return entities.MetadataRecord{
+		return adapter.MetadataRecord{
 			id: r.vals[0]
 			drawable: drawable
 			metadata: metadata

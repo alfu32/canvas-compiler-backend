@@ -17,6 +17,8 @@ pub enum EntityStereotype {
 	dependency_injection        // ="dependency-injection"
 	test                        // ="test"
 	test_suite                  // ="test-suite"
+	input_port=0x140                  // ="test-suite"
+	output_port
 }
 pub enum EntityStatus{
 	planned=0x1001       // ="planned"
