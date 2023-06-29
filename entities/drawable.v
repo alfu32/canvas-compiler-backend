@@ -24,48 +24,47 @@ pub mut:
 	destination               utils.Ref = utils.Ref{ref:'root'}
 }
 
-pub fn (dw Drawable) kind() ?EntityStereotype {
-	match dw.ent_type {
+pub fn (dw Drawable) kind() EntityStereotype {
+	return match dw.ent_type {
 		"Drawable" {
 			if dw.children.len > 0 {
 				if utils.starts_or_ends_with(dw.name,'error') {
-					return .composite_error_handler
+					EntityStereotype.composite_error_handler
 				} else if utils.starts_or_ends_with(dw.name,'test') {
-					return .test_suite
+					EntityStereotype.test_suite
 				} else {
-					return .composite_worker
+					EntityStereotype.composite_worker
 				}
 			} else if utils.starts_or_ends_with_any_of(dw.name,'service', 'client', 'service', 'library',
 				'lib') {
-				return .service_library
+				EntityStereotype.service_library
 			} else if utils.starts_or_ends_with(dw.name,'error') {
-				return .error_handler
+				EntityStereotype.error_handler
 			} else if utils.starts_or_ends_with(dw.name,'test') {
-				return .test
+				EntityStereotype.test
 			} else {
 				if dw.incoming_links.len > 0 && dw.outgoing_links.len > 0 {
-					return .transformer
+					EntityStereotype.transformer
 				} else if dw.incoming_links.len == 0 && dw.outgoing_links.len > 0 {
-					return .generator
+					EntityStereotype.generator
 				} else if dw.incoming_links.len > 0 && dw.outgoing_links.len == 0 {
-					return .sink
+					EntityStereotype.sink
 				} else {
-					return .script
+					EntityStereotype.script
 				}
 			}
 		}
 		else {
-
 			if utils.starts_or_ends_with(dw.name,"error") {
-				return .error_pipe
-			}
-			//// important to implement !!!
-			match dw.model_store.get_by_ref[Drawable](dw.source).kind() {
-				.service_library {
-					return EntityStereotype.dependency_injection
-				}
-				else {
-					return EntityStereotype.transport
+				EntityStereotype.error_pipe
+			}else {
+				match dw.model_store.get_by_ref[Drawable](dw.source).kind() {
+					.service_library {
+						EntityStereotype.dependency_injection
+					}
+					else {
+						EntityStereotype.transport
+					}
 				}
 			}
 		}

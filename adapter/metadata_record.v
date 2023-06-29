@@ -74,7 +74,7 @@ pub fn (em MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 					name: em.drawable.name
 					path: path_nodes_outgoing
 					content: em.metadata.text
-					kind: em.drawable.kind() or { entities.EntityStereotype.transport }
+					kind: em.drawable.kind()
 					tech: em.metadata.technology
 				},
 				PrecompiledEntity{
@@ -84,21 +84,22 @@ pub fn (em MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 					name: em.drawable.name
 					path: path_nodes_incoming
 					content: em.metadata.text
-					kind: em.drawable.kind() or { entities.EntityStereotype.transport }
+					kind: em.drawable.kind()
 					tech: em.metadata.technology
 				},
 			]
 		}
 		else {
+			local_hierarchy:=em.get_local_hierarchy(index)
 			mut pcent := [
 				PrecompiledEntity{
 					ent_type: em.drawable.ent_type
 					entity_id: em.drawable.id
 					internal_id: em.drawable.id
 					name: em.drawable.name
-					path: em.get_local_hierarchy(index)
+					path: local_hierarchy
 					content: em.metadata.text
-					kind: em.drawable.kind() or { entities.EntityStereotype.script }
+					kind: em.drawable.kind()
 					tech: em.metadata.technology
 				},
 			]
@@ -107,7 +108,7 @@ pub fn (em MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 				entity_id: '${em.drawable.id}-${it.id}'
 				internal_id: '${em.drawable.id}-${it.id}'
 				name: "${it.kind}--wip"
-				path: []
+				path: local_hierarchy
 				content: ''
 				kind: it.kind
 				tech: entities.TechnoLang{}
