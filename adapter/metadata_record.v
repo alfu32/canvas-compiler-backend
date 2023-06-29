@@ -103,16 +103,18 @@ pub fn (em MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 					tech: em.metadata.technology
 				},
 			]
-			pcent << em.get_ports(index).map(PrecompiledEntity{
-				ent_type: 'Port'
-				entity_id: '${em.drawable.id}-${it.id}'
-				internal_id: '${em.drawable.id}-${it.id}'
-				name: "${it.kind}--wip"
-				path: local_hierarchy
-				content: ''
-				kind: it.kind
-				tech: entities.TechnoLang{}
-			})
+			pcent << em.get_ports(index).map(
+				PrecompiledEntity{
+					ent_type: 'Port'
+					entity_id: '${em.drawable.id}-${it.id}'
+					internal_id: '${em.drawable.id}-${it.id}'
+					name: "${it.kind}--wip"
+					path: local_hierarchy
+					content: ''
+					kind: it.kind
+					tech: entities.TechnoLang{}
+				}
+			)
 			return pcent
 		}
 	}
