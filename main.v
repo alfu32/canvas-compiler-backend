@@ -51,6 +51,7 @@ fn main() {
 		mut record_index := map[string]adapter.MetadataRecord{}
 		/// mut jsc := compilers.JsNodeCompiler{}
 		/// println(jsc)
+		println('--- indexing -------------------------------------------------------')
 		for em in records {
 			record_index[em.id] = em
 			match em.drawable.ent_type {
@@ -67,12 +68,12 @@ fn main() {
 		}
 		os.rmdir_all('compiled') or {}
 		os.mkdir('compiled') or {}
+		println('--- precompiled entities ------------------------------------------')
 		for em in records {
 			pch := em.precompile(record_index)
 			for pce in pch {
 				println('${pce.kind:20} ${pce.name:20} ${pce.ent_type:20}')
 			}
-			// println()
 		}
 		running = false
 		sl.pool.db.close()
