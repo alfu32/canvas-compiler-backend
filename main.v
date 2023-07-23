@@ -3,8 +3,7 @@ module main
 import dbpool
 import os
 import time
-import compilers
-import entities
+import adapter
 
 [heap]
 struct ServiceLayer {
@@ -16,9 +15,7 @@ pub mut:
 }
 
 fn new_service_layer() ServiceLayer {
-	mut pool := dbpool.init('admin','geodb','password') or {
-		panic(err)
-	}
+	mut pool := dbpool.init('admin', 'geodb', 'password') or { panic(err) }
 	pool.init_mysql() or { panic(err) }
 	mut service_layer := ServiceLayer{
 		pool: pool
@@ -38,8 +35,8 @@ fn main() {
 	mut sl := new_service_layer()
 	os.signal_opt(os.Signal.term, sl.destroy_handler)!
 	os.signal_opt(os.Signal.int, sl.destroy_handler)!
-	mut running:=true
-	for running{
+	mut running := true
+	for running {
 		time.sleep(1 * time.second)
 		println('-------------------------------------------------------------------------')
 		// mut all_techs := sl.pool.get_technologies()
@@ -51,43 +48,35 @@ fn main() {
 		//    	inner join V_HIERARCHY h on h.id=m.id
 		// mut all_entities := app.pool.get_all_entities()
 		mut records := sl.pool.get_all_metadatas() or { panic(err) }
-		mut record_index := map[string]entities.MetadataRecord{}
-		mut jsc := compilers.JsNodeCompiler{}
-		println(jsc)
+		mut record_index := map[string]adapter.MetadataRecord{}
+		/// mut jsc := compilers.JsNodeCompiler{}
+		/// println(jsc)
 		for em in records {
-			println('${em.drawable.ent_type} ${em.drawable.name} ${em.metadata.technology}')
-			println(em)
 			record_index[em.id] = em
-		}
-		os.rmdir_all("compiled")or{}
-		os.mkdir("compiled")or{}
-		for em in records {
 			match em.drawable.ent_type {
 				'Drawable' {
-					mut local_hierarchy := em.hierarchy.map(fn [record_index] (id string) entities.MetadataRecord {
-						return record_index[id]
-					})
-					local_hierarchy.reverse_in_place()
-					/// println(local_hierarchy.map(it.drawable.name).join('/'))
-					fq_name:=jsc.get_fq_name(local_hierarchy)
-					file_name:=jsc.get_file_name(local_hierarchy)
-					compiled_content:=jsc.get_compiled_content(em,record_index)
-
-					os.write_file("compiled/${file_name}",compiled_content)or{
-						println(err)
-					}
-
-					println(fq_name)
-					println(file_name)
-					println(compiled_content)
+					println('indexing ${em.drawable.ent_type:10} ${em.drawable.name:20} ${em.metadata.technology.compiler_id():30} ${em.hierarchy}')
 				}
-				else {}
+				'Link' {
+					println('indexing ${em.drawable.ent_type:10} ${em.drawable.name:20} ${em.metadata.technology.compiler_id():30} ${em.drawable.source.ref} ${em.drawable.destination.ref}')
+				}
+				else {
+					println('unknown ent type : ${em.drawable.id}')
+				}
 			}
 		}
-		running=false
+		os.rmdir_all('compiled') or {}
+		os.mkdir('compiled') or {}
+		for em in records {
+			pch := em.precompile(record_index)
+			for pce in pch {
+				println('${pce.kind:20} ${pce.name:20} ${pce.ent_type:20}')
+			}
+			// println()
+		}
+		running = false
 		sl.pool.db.close()
 
-		println("finished")
-
+		println('finished')
 	}
 }
