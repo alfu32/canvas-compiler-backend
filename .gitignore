@@ -25,3 +25,4 @@ bin/
 /canvas-compiler-backend
 /compiled/
 /compiler-backend
+/compiler

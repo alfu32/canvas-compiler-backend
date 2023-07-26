@@ -16,18 +16,6 @@ pub struct CompiledFile {
 	content string
 }
 
-pub struct PrecompiledEntity {
-pub mut:
-	ent_type    string
-	entity_id   string
-	internal_id string
-	name        string
-	path        []MetadataRecord
-	content     string
-	kind        entities.EntityStereotype
-	tech        entities.TechnoLang
-}
-
 pub struct MetadataRecord {
 pub mut:
 	id          string
@@ -67,12 +55,13 @@ pub fn (em MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 			path_nodes := path_between_nodes(index, source, destination)
 			path_nodes_outgoing := path_nodes.filter(it.direction == .outgoing).map(index[it.mr.id])
 			path_nodes_incoming := path_nodes.filter(it.direction == .incoming).map(index[it.mr.id])
+			// derive an entity for each node on the path
 			return [
 				PrecompiledEntity{
 					ent_type: em.drawable.ent_type
 					entity_id: em.drawable.id
 					internal_id: em.drawable.id
-					name: em.drawable.name
+					name: '${source.drawable.name}_to_${destination.drawable.name}'
 					path: path_nodes_outgoing
 					content: em.metadata.text
 					kind: em.drawable.kind()
@@ -82,7 +71,7 @@ pub fn (em MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 					ent_type: em.drawable.ent_type
 					entity_id: em.drawable.id
 					internal_id: em.drawable.id
-					name: em.drawable.name
+					name: '${source.drawable.name}_to_${destination.drawable.name}'
 					path: path_nodes_incoming
 					content: em.metadata.text
 					kind: em.drawable.kind()
@@ -104,11 +93,12 @@ pub fn (em MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 					tech: em.metadata.technology
 				},
 			]
+			mut ix := 0
 			pcent << em.get_ports(index).map(PrecompiledEntity{
 				ent_type: 'Port'
 				entity_id: '${em.drawable.id}-${it.id}'
 				internal_id: '${em.drawable.id}-${it.id}'
-				name: '${it.kind}--wip'
+				name: '${it.drawable.drawable.name}_${it.kind}-${ix++}'
 				path: local_hierarchy
 				content: ''
 				kind: it.kind

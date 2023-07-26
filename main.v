@@ -4,6 +4,8 @@ import dbpool
 import os
 import time
 import adapter
+import arrays
+import utils
 
 [heap]
 struct ServiceLayer {
@@ -69,11 +71,16 @@ fn main() {
 		os.rmdir_all('compiled') or {}
 		os.mkdir('compiled') or {}
 		println('--- precompiled entities ------------------------------------------')
+		mut pces := []adapter.PrecompiledEntity{}
 		for em in records {
-			pch := em.precompile(record_index)
-			for pce in pch {
-				println('${pce.kind:20} ${pce.name:20} ${pce.ent_type:20}')
-			}
+			pces << em.precompile(record_index)
+		}
+		utils.array_sort_by[adapter.PrecompiledEntity](mut pces, fn (x adapter.PrecompiledEntity) string {
+			return x.fully_qualified_name('.')
+		})
+		// pces.sort(a.fully_qualified_name(".") < b.fully_qualified_name(".") )
+		for pce in pces {
+			println('${pce.fully_qualified_name('.'):80} ${pce.ent_type:20} ${pce.kind:20}')
 		}
 		running = false
 		sl.pool.db.close()
