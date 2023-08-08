@@ -25,6 +25,11 @@ pub mut:
 }
 
 pub fn (dw Drawable) kind() EntityStereotype {
+	unsafe {
+		if dw == 0 {
+			return EntityStereotype.transformer
+		}
+	}
 	if dw.name.len ==  0 {
 		return match dw.ent_type {
 			"Drawable" {
