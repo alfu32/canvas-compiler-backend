@@ -9,6 +9,7 @@ pub mut:
 	internal_id string
 	name        string
 	path        []MetadataRecord
+	link 		?MetadataRecord
 	content     string
 	kind        entities.EntityStereotype
 	tech        entities.TechnoLang

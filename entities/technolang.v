@@ -1,6 +1,7 @@
 module entities
 
 pub struct TechnoLang {
+pub mut:
 	technoid string = 'none'
 	langid   string = 'markdown'
 }

@@ -2,12 +2,16 @@ module adapter
 
 import entities
 import utils
+import arrays
+import modelstore
+import alfu32.geometry
 
 pub struct Port {
 	id         string
 	kind       entities.EntityStereotype
 	drawable   MetadataRecord
 	link       MetadataRecord
+	direction LinkDirection
 	definition string
 }
 
@@ -25,84 +29,100 @@ pub mut:
 	hierarchy   []string
 }
 
-pub fn (em MetadataRecord) get_local_hierarchy(index map[string]MetadataRecord) []MetadataRecord {
-	mut local_hierarchy := em.hierarchy.map(fn [index] (id string) MetadataRecord {
+pub fn (mr MetadataRecord) get_local_hierarchy(index map[string]MetadataRecord) []MetadataRecord {
+	mut local_hierarchy := mr.hierarchy.map(fn [index] (id string) MetadataRecord {
 		return index[id]
 	})
 	local_hierarchy.reverse_in_place()
 	return local_hierarchy
 }
 
-pub fn (em MetadataRecord) get_partial_file_name(index map[string]MetadataRecord) string {
-	return em.get_local_hierarchy(index).map(fn (mr MetadataRecord) string {
+pub fn (mr MetadataRecord) get_partial_file_name(index map[string]MetadataRecord) string {
+	return mr.get_local_hierarchy(index).map(fn (mr MetadataRecord) string {
 		return mr.drawable.name
 	}).join('/')
 }
 
-pub fn (em MetadataRecord) get_partial_fq_name(index map[string]MetadataRecord) string {
-	return em.get_local_hierarchy(index).map(fn (mr MetadataRecord) string {
+pub fn (mr MetadataRecord) get_partial_fq_name(index map[string]MetadataRecord) string {
+	return mr.get_local_hierarchy(index).map(fn (mr MetadataRecord) string {
 		return mr.drawable.name
 	}).join('../geometry')
 }
 
-pub fn (em MetadataRecord) precompile(index map[string]MetadataRecord) []PrecompiledEntity {
-	match em.drawable.ent_type {
+pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []PrecompiledEntity {
+	match mr.drawable.ent_type {
 		'Link' {
-			lnk := em.drawable
+			lnk := mr.drawable
 			source := index[lnk.source.ref]
 			destination := index[lnk.destination.ref]
 
 			path_nodes := path_between_nodes(index, source, destination)
 			path_nodes_outgoing := path_nodes.filter(it.direction == .outgoing).map(index[it.mr.id])
 			path_nodes_incoming := path_nodes.filter(it.direction == .incoming).map(index[it.mr.id])
+			// f:=path_nodes_outgoing.last()
+			// l:=path_nodes_incoming.first()
 			// derive an entity for each node on the path
 			return [
 				PrecompiledEntity{
-					ent_type: em.drawable.ent_type
-					entity_id: em.drawable.id
-					internal_id: em.drawable.id
+					ent_type: mr.drawable.ent_type
+					entity_id: mr.drawable.id
+					internal_id: mr.drawable.id
 					name: '${source.drawable.name}_to_${destination.drawable.name}'
 					path: path_nodes_outgoing
-					content: em.metadata.text
-					kind: em.drawable.kind()
-					tech: em.metadata.technology
+					link: mr
+					content: mr.metadata.text
+					kind: mr.drawable.kind()
+					tech: mr.metadata.technology
 				},
 				PrecompiledEntity{
-					ent_type: em.drawable.ent_type
-					entity_id: em.drawable.id
-					internal_id: em.drawable.id
+					ent_type: mr.drawable.ent_type
+					entity_id: mr.drawable.id
+					internal_id: mr.drawable.id
 					name: '${source.drawable.name}_to_${destination.drawable.name}'
 					path: path_nodes_incoming
-					content: em.metadata.text
-					kind: em.drawable.kind()
-					tech: em.metadata.technology
+					link: mr
+					content: mr.metadata.text
+					kind: mr.drawable.kind()
+					tech: mr.metadata.technology
 				},
 			]
 		}
 		else {
-			local_hierarchy := em.get_local_hierarchy(index)
+			local_hierarchy := mr.get_local_hierarchy(index)
 			mut pcent := [
 				PrecompiledEntity{
-					ent_type: em.drawable.ent_type
-					entity_id: em.drawable.id
-					internal_id: em.drawable.id
-					name: em.drawable.name
+					ent_type: mr.drawable.ent_type
+					entity_id: mr.drawable.id
+					internal_id: mr.drawable.id
+					name: mr.drawable.name
 					path: local_hierarchy
-					content: em.metadata.text
-					kind: em.drawable.kind()
-					tech: em.metadata.technology
+					link: none
+					content: mr.metadata.text
+					kind: mr.drawable.kind()
+					tech: mr.metadata.technology
 				},
 			]
 			mut ix := 0
-			pcent << em.get_ports(index).map(PrecompiledEntity{
-				ent_type: 'Port'
-				entity_id: '${em.drawable.id}-${it.id}'
-				internal_id: '${em.drawable.id}-${it.id}'
-				name: '${it.drawable.drawable.name}_${it.kind}-${ix++}'
-				path: local_hierarchy
+			pcent << mr.get_ports(index).map(PrecompiledEntity{
+				ent_type: "${it.link.drawable.kind()}"// if it.link.drawable.kind() == entities.EntityStereotype.dependency_injection { 'Dependency' } else { 'Port' }
+				entity_id: '${mr.drawable.id}-${it.id}'
+				internal_id: '${mr.drawable.id}-${it.id}'
+				name: '${it.drawable.drawable.name}_${it.link.drawable.name}_${it.kind}'
+				link: it.link
+				path: local_hierarchy/*arrays.concat[MetadataRecord](local_hierarchy, MetadataRecord{
+					id: ''
+					drawable: entities.Drawable{
+						ent_type: 'Port'
+						name: '${it.drawable.drawable.name}_${it.link.drawable.name}_${it.kind}'
+					}
+					metadata: entities.EntityMetadata{
+						ent_type: 'Port'
+						technology: mr.metadata.technology
+					}
+				})*/
 				content: ''
 				kind: it.kind
-				tech: entities.TechnoLang{}
+				tech: mr.metadata.technology
 			})
 			return pcent
 		}
@@ -172,23 +192,23 @@ fn path_between_nodes(index map[string]MetadataRecord, source MetadataRecord, de
 	return traversals1
 }
 
-pub fn (link_em MetadataRecord) get_ports(index map[string]MetadataRecord) []Port {
+pub fn (mr MetadataRecord) get_ports(index map[string]MetadataRecord) []Port {
 	mut links := []LinkType{}
-	links << link_em.drawable.incoming_links.map(fn [index] (r utils.Ref) LinkType {
+	links << mr.drawable.incoming_links.map(fn [index] (r utils.Ref) LinkType {
 		mut mm := LinkType{
 			mr: index[r.ref]
 			direction: .incoming
 		}
 		return mm
 	})
-	links << link_em.drawable.outgoing_links.map(fn [index] (r utils.Ref) LinkType {
+	links << mr.drawable.outgoing_links.map(fn [index] (r utils.Ref) LinkType {
 		mut mm := LinkType{
 			mr: index[r.ref]
 			direction: .outgoing
 		}
 		return mm
 	})
-	ports := links.map(fn [index, link_em] (link_ref LinkType) Port {
+	ports := links.map(fn [index, mr] (link_ref LinkType) Port {
 		link := link_ref.mr
 		kind := match link_ref.direction {
 			.incoming { entities.EntityStereotype.input_port }
@@ -198,11 +218,12 @@ pub fn (link_em MetadataRecord) get_ports(index map[string]MetadataRecord) []Por
 			.incoming { index[link_ref.mr.drawable.destination.ref] }
 			.outgoing { index[link_ref.mr.drawable.source.ref] }
 		}
-		port_hierarchy := link_em.get_local_hierarchy(index)
+		port_hierarchy := mr.get_local_hierarchy(index)
 		return Port{
 			kind: kind
 			drawable: drawable
-			link: link_em
+			link: mr
+			direction: link_ref.direction
 			definition: link.metadata.text
 		}
 	})
