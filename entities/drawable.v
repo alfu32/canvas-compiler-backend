@@ -25,41 +25,42 @@ pub mut:
 }
 
 pub fn (dw Drawable) kind() EntityStereotype {
-	unsafe {
-		if dw == 0 {
-			return EntityStereotype.transformer
-		}
+	/// println(typeof(dw).name)
+	/// unsafe {
+	/// 	if typeof(dw).name == 'nil' {
+	/// 		return EntityStereotype.transformer
+	/// 	}
+	/// }
+	/// println("drawable.kind :: [${dw.ent_type}]" )
+	if dw.ent_type == 'NIL' {
+		return EntityStereotype.generator
 	}
-	if dw.name.len ==  0 {
-		return match dw.ent_type {
-			"Drawable" {
-				if dw.children.len > 0 {
-					EntityStereotype.composite_worker
+	return if dw.name.len ==  0 {
+		if dw.ent_type == "Drawable" {
+			if dw.children.len > 0 {
+				EntityStereotype.composite_worker
+			} else {
+				if dw.incoming_links.len > 0 && dw.outgoing_links.len > 0 {
+					EntityStereotype.transformer
+				} else if dw.incoming_links.len == 0 && dw.outgoing_links.len > 0 {
+					EntityStereotype.generator
+				} else if dw.incoming_links.len > 0 && dw.outgoing_links.len == 0 {
+					EntityStereotype.sink
 				} else {
-					if dw.incoming_links.len > 0 && dw.outgoing_links.len > 0 {
-						EntityStereotype.transformer
-					} else if dw.incoming_links.len == 0 && dw.outgoing_links.len > 0 {
-						EntityStereotype.generator
-					} else if dw.incoming_links.len > 0 && dw.outgoing_links.len == 0 {
-						EntityStereotype.sink
-					} else {
-						EntityStereotype.script
-					}
+					EntityStereotype.script
 				}
 			}
-			else {
-				match dw.model_store.get_by_ref[Drawable](dw.source).kind() {
-					.service_library {
-						EntityStereotype.dependency_injection
-					}
-					else {
-						EntityStereotype.transport
-					}
+		} else {
+			match dw.model_store.get_by_ref[Drawable](dw.source).kind() {
+				.service_library {
+					EntityStereotype.dependency_injection
+				}
+				else {
+					EntityStereotype.transport
 				}
 			}
 		}
-	}
-	return if dw.ent_type.len==0{
+	} else if dw.ent_type.len==0 {
 		EntityStereotype.transformer
 	} else if dw.ent_type=="Drawable" {
 		if dw.children.len > 0 {

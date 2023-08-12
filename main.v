@@ -4,7 +4,6 @@ import dbpool
 import os
 import time
 import adapter
-import arrays
 import utils
 
 [heap]

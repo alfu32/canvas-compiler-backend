@@ -2,9 +2,6 @@ module adapter
 
 import entities
 import utils
-import arrays
-import modelstore
-import alfu32.geometry
 
 pub struct Port {
 	id         string
@@ -13,6 +10,9 @@ pub struct Port {
 	link       MetadataRecord
 	direction LinkDirection
 	definition string
+	link_drawable_kind entities.EntityStereotype
+	link_drawable_name string
+	drawable_drawable_name string
 }
 
 pub struct CompiledFile {
@@ -102,12 +102,12 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 					tech: mr.metadata.technology
 				},
 			]
-			mut ix := 0
+			// mut ix := 0
 			pcent << mr.get_ports(index).map(PrecompiledEntity{
-				ent_type: "${it.link.drawable.kind()}"// if it.link.drawable.kind() == entities.EntityStereotype.dependency_injection { 'Dependency' } else { 'Port' }
+				ent_type: "${it.link_drawable_kind}"// if it.link.drawable.kind() == entities.EntityStereotype.dependency_injection { 'Dependency' } else { 'Port' }
 				entity_id: '${mr.drawable.id}-${it.id}'
 				internal_id: '${mr.drawable.id}-${it.id}'
-				name: '${it.drawable.drawable.name}_${it.link.drawable.name}_${it.kind}'
+				name: '${it.drawable_drawable_name}_${it.link_drawable_name}_${it.kind}'
 				link: it.link
 				path: local_hierarchy/*arrays.concat[MetadataRecord](local_hierarchy, MetadataRecord{
 					id: ''
@@ -218,13 +218,16 @@ pub fn (mr MetadataRecord) get_ports(index map[string]MetadataRecord) []Port {
 			.incoming { index[link_ref.mr.drawable.destination.ref] }
 			.outgoing { index[link_ref.mr.drawable.source.ref] }
 		}
-		port_hierarchy := mr.get_local_hierarchy(index)
+		// port_hierarchy := mr.get_local_hierarchy(index)
 		return Port{
 			kind: kind
 			drawable: drawable
 			link: mr
 			direction: link_ref.direction
 			definition: link.metadata.text
+			link_drawable_kind : link.drawable.kind()
+			link_drawable_name : link.drawable.name
+			drawable_drawable_name: link.drawable.name
 		}
 	})
 	return ports
