@@ -79,7 +79,7 @@ fn main() {
 		})
 		// pces.sort(a.fully_qualified_name(".") < b.fully_qualified_name(".") )
 		for pce in pces {
-			println('${pce.fully_qualified_name('.'):80} ${pce.ent_type:20} ${pce.kind:20}')
+			println('${pce.fully_qualified_name('.'):120} ${pce.ent_type:20} ${pce.kind:20}')
 		}
 		running = false
 		sl.pool.db.close()
