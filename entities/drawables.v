@@ -4,6 +4,7 @@ import alfu32.geometry
 import utils
 
 pub enum EntityStereotype {
+	unknown = 0x100
 	composite_worker=0x101            // ="composite-worker"
 	composite_error_handler     // ="composite-error-handler"
 	generator                   // ="generator"

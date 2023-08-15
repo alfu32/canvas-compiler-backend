@@ -186,7 +186,8 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 				ent_type: "${it.link_drawable_kind}"// if it.link.drawable.kind() == entities.EntityStereotype.dependency_injection { 'Dependency' } else { 'Port' }
 				entity_id: '${mr.drawable.id}-${it.id}'
 				internal_id: '${mr.drawable.id}-${it.id}'
-				name: '${it.drawable_drawable_name}_${it.link_drawable_name}_${it.kind}'
+				// name: '${it.drawable_drawable_name}_${it.link_drawable_name}_${it.kind}'
+				name: '${it.drawable_drawable_name}_${it.kind}'
 				link: it.link
 				path: local_hierarchy/*arrays.concat[MetadataRecord](local_hierarchy, MetadataRecord{
 					id: ''
