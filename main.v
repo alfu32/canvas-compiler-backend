@@ -16,7 +16,7 @@ pub mut:
 }
 
 fn new_service_layer() ServiceLayer {
-	mut pool := dbpool.init('admin', 'geodb', 'password') or { panic(err) }
+	mut pool := dbpool.connect('admin', 'geodb', 'password') or { panic(err) }
 	pool.init_mysql() or { panic(err) }
 	mut service_layer := ServiceLayer{
 		pool: pool

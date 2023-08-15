@@ -26,7 +26,7 @@ pub mut:
 	db       &mysql.DB
 }
 
-pub fn init(username string, dbname string, password string) !DbPool {
+pub fn connect(username string, dbname string, password string) !DbPool {
 	db := mysql.connect(mysql.Config{
 		username: username
 		password: password
