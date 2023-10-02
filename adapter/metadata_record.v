@@ -4,14 +4,14 @@ import entities
 import utils
 
 pub struct Port {
-	id         string
-	kind       entities.EntityStereotype
-	drawable   MetadataRecord
-	link       MetadataRecord
-	direction LinkDirection
-	definition string
-	link_drawable_kind entities.EntityStereotype
-	link_drawable_name string
+	id                     string
+	kind                   entities.EntityStereotype
+	drawable               MetadataRecord
+	link                   MetadataRecord
+	direction              LinkDirection
+	definition             string
+	link_drawable_kind     entities.EntityStereotype
+	link_drawable_name     string
 	drawable_drawable_name string
 }
 
@@ -52,6 +52,7 @@ pub fn (mr MetadataRecord) get_partial_fq_name(index map[string]MetadataRecord) 
 pub fn get_optional[T]() ?T {
 	return none
 }
+
 pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []PrecompiledEntity {
 	match mr.drawable.ent_type {
 		'Link' {
@@ -62,20 +63,15 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 			path_nodes := path_between_nodes(index, source, destination)
 			path_nodes_outgoing := path_nodes.filter(it.direction == .outgoing).map(index[it.mr.id])
 			path_nodes_incoming := path_nodes.filter(it.direction == .incoming).map(index[it.mr.id])
-			// derive an entity for each node on the path
-			// if path_nodes_outgoing.len == 0 || path_nodes_incoming.len == 0 {
-			// 	return []
-			// }
-			// f:= path_nodes_outgoing.last()
-			// l:= path_nodes_incoming.first()
-			// n := f
 			mut pcent := []PrecompiledEntity{}
-			mut prev := MetadataRecord{id: 'none'}
+			mut prev := MetadataRecord{
+				id: 'none'
+			}
 			mut cnodes := []MetadataRecord{}
 			for node in path_nodes_outgoing {
 				cnodes << node
 				if prev.id == 'none' {
-					pcent << PrecompiledEntity {
+					pcent << PrecompiledEntity{
 						ent_type: mr.drawable.ent_type
 						entity_id: mr.drawable.id
 						internal_id: mr.drawable.id
@@ -88,7 +84,7 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 						tech: mr.metadata.technology
 					}
 				} else {
-					pcent << PrecompiledEntity {
+					pcent << PrecompiledEntity{
 						ent_type: mr.drawable.ent_type
 						entity_id: mr.drawable.id
 						internal_id: mr.drawable.id
@@ -101,16 +97,20 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 						tech: mr.metadata.technology
 					}
 				}
-				prev=node
+				prev = node
 			}
-			prev = if path_nodes_outgoing.len > 0 {path_nodes_outgoing.last()}else{
-				MetadataRecord{id: 'none'}
+			prev = if path_nodes_outgoing.len > 0 {
+				path_nodes_outgoing.last()
+			} else {
+				MetadataRecord{
+					id: 'none'
+				}
 			}
 			cnodes = []MetadataRecord{}
 			for node in path_nodes_incoming {
 				cnodes << node
 				if prev.id == 'none' {
-					pcent << PrecompiledEntity {
+					pcent << PrecompiledEntity{
 						ent_type: mr.drawable.ent_type
 						entity_id: mr.drawable.id
 						internal_id: mr.drawable.id
@@ -123,7 +123,7 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 						tech: mr.metadata.technology
 					}
 				} else {
-					pcent << PrecompiledEntity {
+					pcent << PrecompiledEntity{
 						ent_type: mr.drawable.ent_type
 						entity_id: mr.drawable.id
 						internal_id: mr.drawable.id
@@ -136,35 +136,9 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 						tech: mr.metadata.technology
 					}
 				}
-				prev=node
+				prev = node
 			}
 			return pcent
-			//// return [
-			//// 	PrecompiledEntity {
-			//// 		ent_type: mr.drawable.ent_type
-			//// 		entity_id: mr.drawable.id
-			//// 		internal_id: mr.drawable.id
-			//// 		// name: mr.drawable.name
-			//// 		name: '${mr.drawable.name}_from_${source.drawable.name}_to_${destination.drawable.name}'
-			//// 		path: path_nodes_outgoing
-			//// 		link: mr
-			//// 		content: mr.metadata.text
-			//// 		kind: mr.drawable.kind()
-			//// 		tech: mr.metadata.technology
-			//// 	},
-			//// 	PrecompiledEntity{
-			//// 		ent_type: mr.drawable.ent_type
-			//// 		entity_id: mr.drawable.id
-			//// 		internal_id: mr.drawable.id
-			//// 		// name: mr.drawable.name
-			//// 		name: '${mr.drawable.name}_from_${source.drawable.name}_to_${destination.drawable.name}'
-			//// 		path: path_nodes_incoming
-			//// 		link: mr
-			//// 		content: mr.metadata.text
-			//// 		kind: mr.drawable.kind()
-			//// 		tech: mr.metadata.technology
-			//// 	},
-			//// ]
 		}
 		else {
 			local_hierarchy := mr.get_local_hierarchy(index)
@@ -183,23 +157,13 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 			]
 			// mut ix := 0
 			pcent << mr.get_ports(index).map(PrecompiledEntity{
-				ent_type: "${it.link_drawable_kind}"// if it.link.drawable.kind() == entities.EntityStereotype.dependency_injection { 'Dependency' } else { 'Port' }
+				ent_type: '${it.link_drawable_kind}' // if it.link.drawable.kind() == entities.EntityStereotype.dependency_injection { 'Dependency' } else { 'Port' }
 				entity_id: '${mr.drawable.id}-${it.id}'
 				internal_id: '${mr.drawable.id}-${it.id}'
 				// name: '${it.drawable_drawable_name}_${it.link_drawable_name}_${it.kind}'
 				name: '${it.drawable_drawable_name}_${it.kind}'
 				link: it.link
-				path: local_hierarchy/*arrays.concat[MetadataRecord](local_hierarchy, MetadataRecord{
-					id: ''
-					drawable: entities.Drawable{
-						ent_type: 'Port'
-						name: '${it.drawable.drawable.name}_${it.link.drawable.name}_${it.kind}'
-					}
-					metadata: entities.EntityMetadata{
-						ent_type: 'Port'
-						technology: mr.metadata.technology
-					}
-				})*/
+				path: local_hierarchy
 				content: ''
 				kind: it.kind
 				tech: mr.metadata.technology
@@ -305,8 +269,8 @@ pub fn (mr MetadataRecord) get_ports(index map[string]MetadataRecord) []Port {
 			link: mr
 			direction: link_ref.direction
 			definition: link.metadata.text
-			link_drawable_kind : link.drawable.kind()
-			link_drawable_name : link.drawable.name
+			link_drawable_kind: link.drawable.kind()
+			link_drawable_name: link.drawable.name
 			drawable_drawable_name: link.drawable.name
 		}
 	})

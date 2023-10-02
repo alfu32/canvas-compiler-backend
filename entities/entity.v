@@ -42,10 +42,8 @@ pub fn entity_from_json_array(json_string string) ![]Entity {
 	if json_string == '' {
 		return []
 	}
-	entities := json.decode([]Entity, json_string) or {
-		panic('could not decode (((${json_string})))')
-	}
-	return entities
+	ents := json.decode([]Entity, json_string) or { panic('could not decode (((${json_string})))') }
+	return ents
 }
 
 pub fn (e Entity) get_box() !geometry.Box {
