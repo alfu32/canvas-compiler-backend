@@ -6,7 +6,7 @@ import time
 import adapter
 import utils
 
-[heap]
+@[heap]
 struct ServiceLayer {
 pub mut:
 	pool dbpool.DbPool
