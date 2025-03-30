@@ -59,31 +59,37 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 			path_nodes := path_between_nodes(index, source, destination)
 			path_nodes_outgoing := path_nodes.filter(it.direction == .outgoing).map(index[it.mr.id])
 			path_nodes_incoming := path_nodes.filter(it.direction == .incoming).map(index[it.mr.id])
-			// f:=path_nodes_outgoing.last()
-			// l:=path_nodes_incoming.first()
 			// derive an entity for each node on the path
+			// if path_nodes_outgoing.len == 0 || path_nodes_incoming.len == 0 {
+			// 	return []
+			// }
+			// f:= path_nodes_outgoing.last()
+			// l:= path_nodes_incoming.first()
+			// n := f
 			return [
 				PrecompiledEntity{
 					ent_type:    mr.drawable.ent_type
 					entity_id:   mr.drawable.id
 					internal_id: mr.drawable.id
-					name:        '${source.drawable.name}_to_${destination.drawable.name}'
-					path:        path_nodes_outgoing
-					link:        mr
-					content:     mr.metadata.text
-					kind:        mr.drawable.kind()
-					tech:        mr.metadata.technology
+					// name: mr.drawable.name
+					name:    '${mr.drawable.name}_from_${source.drawable.name}_to_${destination.drawable.name}'
+					path:    path_nodes_outgoing
+					link:    mr
+					content: mr.metadata.text
+					kind:    mr.drawable.kind()
+					tech:    mr.metadata.technology
 				},
 				PrecompiledEntity{
 					ent_type:    mr.drawable.ent_type
 					entity_id:   mr.drawable.id
 					internal_id: mr.drawable.id
-					name:        '${source.drawable.name}_to_${destination.drawable.name}'
-					path:        path_nodes_incoming
-					link:        mr
-					content:     mr.metadata.text
-					kind:        mr.drawable.kind()
-					tech:        mr.metadata.technology
+					// name: mr.drawable.name
+					name:    '${mr.drawable.name}_from_${source.drawable.name}_to_${destination.drawable.name}'
+					path:    path_nodes_incoming
+					link:    mr
+					content: mr.metadata.text
+					kind:    mr.drawable.kind()
+					tech:    mr.metadata.technology
 				},
 			]
 		}
