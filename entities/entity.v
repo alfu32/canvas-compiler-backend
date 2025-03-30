@@ -1,19 +1,13 @@
-module geometry
+module entities
 
 import json
+import alfu32.geometry
 
 pub struct Entity {
 pub mut:
 	id       string
 	ent_type string
 	json     string
-}
-
-pub struct MetadataRecord {
-pub mut:
-	id   string
-	json string
-	path []string
 }
 
 pub struct EntityMetadata {
@@ -54,6 +48,6 @@ pub fn entity_from_json_array(json_string string) ![]Entity {
 	return entities
 }
 
-pub fn (e Entity) get_box() !Box {
-	return json.decode(Box, e.json)
+pub fn (e Entity) get_box() !geometry.Box {
+	return json.decode(geometry.Box, e.json)
 }
