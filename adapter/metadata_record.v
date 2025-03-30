@@ -193,9 +193,10 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 				ent_type:    '${it.link_drawable_kind}' // if it.link.drawable.kind() == entities.EntityStereotype.dependency_injection { 'Dependency' } else { 'Port' }
 				entity_id:   '${mr.drawable.id}-${it.id}'
 				internal_id: '${mr.drawable.id}-${it.id}'
-				name:        '${it.drawable_drawable_name}_${it.link_drawable_name}_${it.kind}'
-				link:        it.link
-				path:        local_hierarchy /*arrays.concat[MetadataRecord](local_hierarchy, MetadataRecord{
+				// name: '${it.drawable_drawable_name}_${it.link_drawable_name}_${it.kind}'
+				name:    '${it.drawable_drawable_name}_${it.kind}'
+				link:    it.link
+				path:    local_hierarchy /*arrays.concat[MetadataRecord](local_hierarchy, MetadataRecord{
 					id: ''
 					drawable: entities.Drawable{
 						ent_type: 'Port'
@@ -206,9 +207,9 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 						technology: mr.metadata.technology
 					}
 				})*/
-				content:     ''
-				kind:        it.kind
-				tech:        mr.metadata.technology
+				content: ''
+				kind:    it.kind
+				tech:    mr.metadata.technology
 			})
 			return pcent
 		}

@@ -13,7 +13,7 @@ pub mut:
 	anchor                    geometry.Point
 	size                      geometry.Point
 	rotation                  f64
-	parent                    utils.Ref   = utils.Ref{
+	parent                    utils.Ref = utils.Ref{
 		ref: 'root'
 	}
 	is_open                   bool        = true
@@ -25,7 +25,7 @@ pub mut:
 	source                    utils.Ref   = utils.Ref{
 		ref: 'root'
 	}
-	destination               utils.Ref   = utils.Ref{
+	destination               utils.Ref = utils.Ref{
 		ref: 'root'
 	}
 }
@@ -39,7 +39,7 @@ pub fn (dw Drawable) kind() EntityStereotype {
 	/// }
 	/// println("drawable.kind :: [${dw.ent_type}]" )
 	if dw.ent_type == 'NIL' {
-		return EntityStereotype.generator
+		return EntityStereotype.unknown
 	}
 	return if dw.name.len == 0 {
 		if dw.ent_type == 'Drawable' {
@@ -60,6 +60,9 @@ pub fn (dw Drawable) kind() EntityStereotype {
 			match dw.model_store.get_by_ref[Drawable](dw.source).kind() {
 				.service_library {
 					EntityStereotype.dependency_injection
+				}
+				.unknown {
+					EntityStereotype.unknown
 				}
 				else {
 					EntityStereotype.transport
