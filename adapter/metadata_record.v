@@ -63,13 +63,6 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 			path_nodes := path_between_nodes(index, source, destination)
 			path_nodes_outgoing := path_nodes.filter(it.direction == .outgoing).map(index[it.mr.id])
 			path_nodes_incoming := path_nodes.filter(it.direction == .incoming).map(index[it.mr.id])
-			// derive an entity for each node on the path
-			// if path_nodes_outgoing.len == 0 || path_nodes_incoming.len == 0 {
-			// 	return []
-			// }
-			// f:= path_nodes_outgoing.last()
-			// l:= path_nodes_incoming.first()
-			// n := f
 			mut pcent := []PrecompiledEntity{}
 			mut prev := MetadataRecord{
 				id: 'none'
@@ -146,32 +139,6 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 				prev = node
 			}
 			return pcent
-			//// return [
-			//// 	PrecompiledEntity {
-			//// 		ent_type: mr.drawable.ent_type
-			//// 		entity_id: mr.drawable.id
-			//// 		internal_id: mr.drawable.id
-			//// 		// name: mr.drawable.name
-			//// 		name: '${mr.drawable.name}_from_${source.drawable.name}_to_${destination.drawable.name}'
-			//// 		path: path_nodes_outgoing
-			//// 		link: mr
-			//// 		content: mr.metadata.text
-			//// 		kind: mr.drawable.kind()
-			//// 		tech: mr.metadata.technology
-			//// 	},
-			//// 	PrecompiledEntity{
-			//// 		ent_type: mr.drawable.ent_type
-			//// 		entity_id: mr.drawable.id
-			//// 		internal_id: mr.drawable.id
-			//// 		// name: mr.drawable.name
-			//// 		name: '${mr.drawable.name}_from_${source.drawable.name}_to_${destination.drawable.name}'
-			//// 		path: path_nodes_incoming
-			//// 		link: mr
-			//// 		content: mr.metadata.text
-			//// 		kind: mr.drawable.kind()
-			//// 		tech: mr.metadata.technology
-			//// 	},
-			//// ]
 		}
 		else {
 			local_hierarchy := mr.get_local_hierarchy(index)
@@ -196,17 +163,7 @@ pub fn (mr MetadataRecord) precompile(index map[string]MetadataRecord) []Precomp
 				// name: '${it.drawable_drawable_name}_${it.link_drawable_name}_${it.kind}'
 				name:    '${it.drawable_drawable_name}_${it.kind}'
 				link:    it.link
-				path:    local_hierarchy /*arrays.concat[MetadataRecord](local_hierarchy, MetadataRecord{
-					id: ''
-					drawable: entities.Drawable{
-						ent_type: 'Port'
-						name: '${it.drawable.drawable.name}_${it.link.drawable.name}_${it.kind}'
-					}
-					metadata: entities.EntityMetadata{
-						ent_type: 'Port'
-						technology: mr.metadata.technology
-					}
-				})*/
+				path:    local_hierarchy
 				content: ''
 				kind:    it.kind
 				tech:    mr.metadata.technology

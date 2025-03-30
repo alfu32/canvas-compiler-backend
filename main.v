@@ -78,8 +78,12 @@ fn main() {
 			return x.fully_qualified_name('.')
 		})
 		// pces.sort(a.fully_qualified_name(".") < b.fully_qualified_name(".") )
-		for pce in pces {
-			println('${pce.fully_qualified_name('.'):120} ${pce.ent_type:20} ${pce.kind:20}')
+		for mut pce in pces {
+			pce.dependencies = pce.get_dependencies(pces)
+			println('${pce.fully_qualified_name('.')} ${pce.ent_type:20} ${pce.kind:20}')
+			for dep in pce.dependencies {
+				println('  - ${dep.fully_qualified_name('.')} ${dep.ent_type:20} ${dep.kind:20}')
+			}
 		}
 		running = false
 		sl.pool.db.close()
