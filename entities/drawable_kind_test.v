@@ -150,40 +150,45 @@ pub fn test_kind_is_service_library() {
 }
 
 pub fn test_kind_is_transport() {
-	dw := Link{
-		name: 'link'
+	dw := Drawable{
+		ent_type: 'Link'
+		name:     'link'
 	}
 	println(dw)
 	assert dw.kind() == .transport
 }
 
 pub fn test_kind_is_error_pipe() {
-	dw1 := Link{
-		name: 'error'
+	dw1 := Drawable{
+		ent_type: 'Link'
+		name:     'error_s'
 	}
 	println(dw1)
 	assert dw1.kind() == .error_pipe
-	dw2 := Link{
-		name: 'read_error'
+	dw2 := Drawable{
+		ent_type: 'Link'
+		name:     'read_error'
 	}
 	println(dw2)
 	assert dw2.kind() == .error_pipe
-	dw3 := Link{
-		name: 'error_fetch'
+	dw3 := Drawable{
+		ent_type: 'Link'
+		name:     'error_fetch'
 	}
 	println(dw3)
 	assert dw3.kind() == .error_pipe
 }
 
 pub fn test_kind_is_dependency_injection() {
-	dw := Link{
-		name:        'link'
+	dw := Drawable{
+		ent_type:    'Link'
+		name:        'http_client'
 		source:      utils.Ref{
 			ref: 'sl'
 		}
 		model_store: modelstore.ModelStore[Drawable]{
 			drawables_index: {
-				'id': Drawable{
+				'sl': Drawable{
 					id:   'sl'
 					name: 'service_layer'
 				}
@@ -196,7 +201,7 @@ pub fn test_kind_is_dependency_injection() {
 
 pub fn test_kind_is_test() {
 	dw := Drawable{
-		name: 'drawable'
+		name: 'drawable_test'
 	}
 	println(dw)
 	assert dw.kind() == .test
@@ -204,7 +209,15 @@ pub fn test_kind_is_test() {
 
 pub fn test_kind_is_test_suite() {
 	dw := Drawable{
-		name: 'drawable'
+		name:     'drawable_test'
+		children: [
+			utils.Ref{
+				ref: 'a'
+			},
+			utils.Ref{
+				ref: 'b'
+			},
+		]
 	}
 	println(dw)
 	assert dw.kind() == .test_suite
