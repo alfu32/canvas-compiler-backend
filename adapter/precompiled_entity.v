@@ -24,9 +24,26 @@ pub fn (pce PrecompiledEntity) get_dependencies(fullFirstPassList []PrecompiledE
 	if pce.kind == .input_port || pce.kind == .output_port || pce.link == none {
 		return []PrecompiledEntity{} // return empty list if there is no link
 	} else {
-		link_id := (pce.link!).id
+		link := pce.link or {
+			MetadataRecord{
+				id: 'undefined'
+			}
+		}
+
+		if link.id == 'undefined' {
+			return []PrecompiledEntity{} // return empty list if there is no link
+		}
+		link_id := link.id
+
 		mut dependencies := fullFirstPassList.filter(fn [link_id] (entity PrecompiledEntity) bool {
-			return !(entity.link == none) && (entity.link!).id == link_id
+			link := entity.link or {
+				MetadataRecord{ id: 'undefined' }
+			}
+
+			if link.id == 'undefined' {
+				return false
+			}
+			return link.id == link_id
 		})
 		return dependencies
 	}

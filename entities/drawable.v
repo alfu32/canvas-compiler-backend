@@ -18,10 +18,10 @@ pub mut:
 	}
 	is_open                   bool        = true
 	children                  []utils.Ref = []
-	outgoing_links            []utils.Ref = [] @[json: outgoingLinks]
-	incoming_links            []utils.Ref = [] @[json: incomingLinks]
-	outgoing_traversing_links []utils.Ref = [] @[json: outgoingTraversingLinks]
-	incoming_traversing_links []utils.Ref = [] @[json: incomingTraversingLinks]
+	outgoing_links            []utils.Ref = [] // @[json: outgoingLinks]
+	incoming_links            []utils.Ref = [] // @[json: incomingLinks]
+	outgoing_traversing_links []utils.Ref = [] // @[json: outgoingTraversingLinks]
+	incoming_traversing_links []utils.Ref = [] // @[json: incomingTraversingLinks]
 	source                    utils.Ref   = utils.Ref{
 		ref: 'root'
 	}
