@@ -3,8 +3,8 @@ module main
 import dbpool
 import os
 import time
-import adapter
-import utils
+import compilers
+import entities
 
 @[heap]
 struct ServiceLayer {
@@ -16,7 +16,7 @@ pub mut:
 }
 
 fn new_service_layer() ServiceLayer {
-	mut pool := dbpool.connect('admin', 'geodb', 'password') or { panic(err) }
+	mut pool := dbpool.init('admin', 'geodb', 'password') or { panic(err) }
 	pool.init_mysql() or { panic(err) }
 	mut service_layer := ServiceLayer{
 		pool: pool
@@ -49,40 +49,35 @@ fn main() {
 		//    	inner join V_HIERARCHY h on h.id=m.id
 		// mut all_entities := app.pool.get_all_entities()
 		mut records := sl.pool.get_all_metadatas() or { panic(err) }
-		mut record_index := map[string]adapter.MetadataRecord{}
-		/// mut jsc := compilers.JsNodeCompiler{}
-		/// println(jsc)
-		println('--- indexing -------------------------------------------------------')
+		mut record_index := map[string]entities.MetadataRecord{}
+		mut jsc := compilers.JsNodeCompiler{}
+		println(jsc)
 		for em in records {
+			println('${em.drawable.ent_type} ${em.drawable.name} ${em.metadata.technology}')
+			println(em)
 			record_index[em.id] = em
-			match em.drawable.ent_type {
-				'Drawable' {
-					println('indexing ${em.drawable.ent_type:10} ${em.drawable.name:20} ${em.metadata.technology.compiler_id():30} ${em.hierarchy}')
-				}
-				'Link' {
-					println('indexing ${em.drawable.ent_type:10} ${em.drawable.name:20} ${em.metadata.technology.compiler_id():30} ${em.drawable.source.ref} ${em.drawable.destination.ref}')
-				}
-				else {
-					println('unknown ent type : ${em.drawable.id}')
-				}
-			}
 		}
 		os.rmdir_all('compiled') or {}
 		os.mkdir('compiled') or {}
-		println('--- precompiled entities ------------------------------------------')
-		mut pces := []adapter.PrecompiledEntity{}
 		for em in records {
-			pces << em.precompile(record_index)
-		}
-		utils.array_sort_by[adapter.PrecompiledEntity](mut pces, fn (x adapter.PrecompiledEntity) string {
-			return x.fully_qualified_name('.')
-		})
-		// pces.sort(a.fully_qualified_name(".") < b.fully_qualified_name(".") )
-		for mut pce in pces {
-			pce.dependencies = pce.get_dependencies(pces)
-			println('${pce.fully_qualified_name('.')} ${pce.ent_type:20} ${pce.kind:20}')
-			for dep in pce.dependencies {
-				println('  - ${dep.fully_qualified_name('.')} ${dep.ent_type:20} ${dep.kind:20}')
+			match em.drawable.ent_type {
+				'Drawable' {
+					mut local_hierarchy := em.hierarchy.map(fn [record_index] (id string) entities.MetadataRecord {
+						return record_index[id]
+					})
+					local_hierarchy.reverse_in_place()
+					/// println(local_hierarchy.map(it.drawable.name).join('/'))
+					fq_name := jsc.get_fq_name(local_hierarchy)
+					file_name := jsc.get_file_name(local_hierarchy)
+					compiled_content := jsc.get_compiled_content(em, record_index)
+
+					os.write_file('compiled/${file_name}', compiled_content) or { println(err) }
+
+					println(fq_name)
+					println(file_name)
+					println(compiled_content)
+				}
+				else {}
 			}
 		}
 		running = false
