@@ -52,13 +52,27 @@ fn main() {
 		/// mut jsc := compilers.JsNodeCompiler{}
 		/// println(jsc)
 		for em in records {
-			println('indexing ${em.drawable.ent_type} ${em.drawable.name} ${em.metadata.technology}')
 			record_index[em.id] = em
+			match em.drawable.ent_type {
+				'Drawable' {
+					println('indexing ${em.drawable.ent_type:10} ${em.drawable.name:20} ${em.metadata.technology.compiler_id():30} ${em.hierarchy}')
+				}
+				'Link' {
+					println('indexing ${em.drawable.ent_type:10} ${em.drawable.name:20} ${em.metadata.technology.compiler_id():30} ${em.drawable.source.ref} ${em.drawable.destination.ref}')
+				}
+				else {
+					println('unknown ent type : ${em.drawable.id}')
+				}
+			}
 		}
 		os.rmdir_all('compiled') or {}
 		os.mkdir('compiled') or {}
 		for em in records {
-			println(em.precompile(record_index))
+			pch := em.precompile(record_index)
+			for pce in pch {
+				println('${pce.kind:20} ${pce.name:20} ${pce.ent_type:20}')
+			}
+			// println()
 		}
 		running = false
 		sl.pool.db.close()

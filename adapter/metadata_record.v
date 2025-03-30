@@ -17,6 +17,7 @@ pub struct CompiledFile {
 }
 
 pub struct PrecompiledEntity {
+pub mut:
 	ent_type    string
 	entity_id   string
 	internal_id string

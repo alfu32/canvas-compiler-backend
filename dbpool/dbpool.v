@@ -26,9 +26,7 @@ pub mut:
 	db       &mysql.DB
 }
 
-pub fn init(username string,
-	dbname string,
-	password string) !DbPool {
+pub fn init(username string, dbname string, password string) !DbPool {
 	db := mysql.connect(mysql.Config{
 		username: username
 		password: password
@@ -247,6 +245,7 @@ pub fn (mut s DbPool) get_all_metadatas() ![]adapter.MetadataRecord {
 		from BOXES bx
 		left outer join METADATA m on m.id=bx.id
    		left outer join V_HIERARCHY h on h.id=m.id
+		ORDER BY bx.ent_type,bx.dt_created
 	".trim_indent()
 	r := s.mysql_query(q) or { return err }
 	return r.rows.map(fn (r GenericRow) adapter.MetadataRecord {
