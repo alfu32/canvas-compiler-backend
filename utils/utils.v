@@ -10,6 +10,9 @@ pub fn starts_or_ends_with_any_of(str string, src ...string) bool {
 }
 
 pub fn starts_or_ends_with(str string, src string) bool {
+	if str == '' {
+		return false
+	}
 	return str == src || str.starts_with(src + '_') || str.ends_with('_${src}')
 }
 
